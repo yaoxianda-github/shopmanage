@@ -13,6 +13,7 @@
 """
 
 from interface import user_interface
+from lib import common
 
 logged_user = None  # 记录用户登录状态
 logged_admin = False  # 是否管理员
@@ -49,7 +50,11 @@ def register():
         # if not re.findall('^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,16}$', password):
         #     print('\n密码太弱了，必须包含大写字母，小写字母和数字，且长度必须为8到16位')
         #     continue
-        # 3、调用注册接口进行注册
+
+        # 3、密码加密
+        password = common.pwd_to_sha256(password)
+
+        # 4、调用注册接口进行注册
         flag, msg = user_interface.register_interface(username, password)  # 接收小元组，进行解压赋值
         print(msg)
         if flag:  # 注册成功，终止循环
@@ -90,9 +95,12 @@ def login():
         username = input('\n请输入用户名：').strip()
         password = input('\n请输入密码：').strip()
         is_login = input('\n按任意键确定或者按/n退出').strip().lower()
-        if is_login == 'n':
+        if is_login == 'n':     # 判断用户是否想退出登录功能
             break
-        # 2、调用逻辑接口层，把数据传给登录接口，接口再调用数据处理层的方法校验用户是否存在
+        # 2、密码加密
+        password = common.pwd_to_sha256(password)
+
+        # 3、调用逻辑接口层，把数据传给登录接口，接口再调用数据处理层的方法校验用户是否存在
         flag, msg, is_admin = user_interface.login_interface(username, password)
         print(msg)
         if flag:
@@ -103,41 +111,49 @@ def login():
 
 
 # 3、充值功能
+@common.login_auth
 def recharge():
     print('充值功能')
 
 
 # 4、转账功能
+@common.login_auth
 def transfer():
     print('转账功能')
 
 
 # 5、提现功能
+@common.login_auth
 def withdraw():
     print('提现功能')
 
 
 # 6、查看余额
+@common.login_auth
 def check_balance():
     print('查看余额')
 
 
 # 7、查看流水
+@common.login_auth
 def check_flow():
     print('查看流水')
 
 
 # 8、购物功能
+@common.login_auth
 def shopping():
     print('购物功能')
 
 
 # 9、查看购物车功能
+@common.login_auth
 def check_shopping_cart():
     print('查看购物车')
 
 
 # 10、退出账号
+@common.login_auth
 def login_out():
     print('退出账号')
     global logged_user, logged_admin
@@ -147,6 +163,7 @@ def login_out():
 
 
 # 11、管理员功能
+@common.login_auth
 def admin():
     print('管理员功能')
 
