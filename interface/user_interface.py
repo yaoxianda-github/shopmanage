@@ -44,12 +44,12 @@ def register_interface(username, password, balance=0, is_admin=False):
 
 # 登录接口
 def login_interface(username, password):
-    user_data = db_handler.select_data(username)    # 查询用户是否存在
+    user_data = db_handler.select_data(username)  # 查询用户是否存在
     # 用户不存在
     if not user_data:
         return False, f'\n用户: {username}不存在，请重新输入！', False
     # 校验用户密码
-    if not password==user_data.get('password'):
+    if not password == user_data.get('password'):
         return False, f'\n用户名或者密码不正确，请重新输入！', False
     # 密码正确，校验用户是否为冻结状态
     if user_data.get('locked') is True:
