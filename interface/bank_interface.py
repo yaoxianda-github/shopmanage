@@ -11,3 +11,16 @@
 银行相关接口
 
 """
+
+
+# 充值接口
+def recharge_interface(username, amount):
+    # 获取用户数据
+    from db import db_handler
+    user_data = db_handler.select_data(username)
+    # 给user_data里的balance充值操作
+    user_data['balance'] += amount
+    # 调用数据处理层，保存修改后的user_data数据
+    db_handler.save(user_data)
+    return True, f'用户{username}充值{amount}成功，' \
+                 f'当前余额为：{user_data.get("balance")}'

@@ -31,6 +31,7 @@ def login_auth(func):
 import hashlib
 
 
+# 密码加密
 def pwd_to_sha256(password):
     # 创建一个SHA-256对象
     sha256_hash = hashlib.sha256()

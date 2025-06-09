@@ -95,7 +95,7 @@ def login():
         username = input('\n请输入用户名：').strip()
         password = input('\n请输入密码：').strip()
         is_login = input('\n按任意键确定或者按/n退出').strip().lower()
-        if is_login == 'n':     # 判断用户是否想退出登录功能
+        if is_login == 'n':  # 判断用户是否想退出登录功能
             break
         # 2、密码加密
         password = common.pwd_to_sha256(password)
@@ -114,6 +114,27 @@ def login():
 @common.login_auth
 def recharge():
     print('充值功能')
+    while True:
+        amount = input('请输入充值金额：').strip()
+        is_recharge = input('按任意键确认/n退出').strip().lower()
+        # 允许用户退出充值功能
+        if is_recharge == 'n':
+            break
+        # 判断用户输入的金额是否是数字
+        if not amount.isdigit():
+            print('\n请输入正确的金额！')
+            continue
+        # 把amount转为int类型
+        amount = int(amount)
+        # 判断用户输入金额是否为0
+        if amount == 0:
+            print('\n充值的金额不能为0！')
+        # 调用充值接口进行充值
+        from interface import bank_interface
+        flag, msg = bank_interface.recharge_interface(logged_user, amount)
+        print(msg)
+        if flag:
+            break
 
 
 # 4、转账功能
