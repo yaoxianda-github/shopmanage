@@ -25,6 +25,9 @@ import configparser
 config = configparser.ConfigParser()
 config.read(CONFIG_PATH, encoding='utf-8')
 USER_DATA_DIR = config.get('path', 'USER_DATA_DIR')  # 通过配置文件setting.cfg获取的路径
-if not os.path.isdir(USER_DATA_DIR):    # 如果用户在setting.cfg中未配置路径，则用默认user_data路径
+if not os.path.isdir(USER_DATA_DIR):  # 如果用户在setting.cfg中未配置路径，则用默认user_data路径
     USER_DATA_DIR = os.path.join(BASE_DIR, 'db', 'user_data')
 print(USER_DATA_DIR)
+
+# 获取提现手续费率
+RATE = config.getfloat('bank', 'RATE')

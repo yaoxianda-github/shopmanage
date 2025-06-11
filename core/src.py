@@ -12,7 +12,7 @@
 
 """
 
-from interface import user_interface
+from interface import user_interface, bank_interface
 from lib import common
 
 logged_user = None  # 记录用户登录状态
@@ -26,7 +26,7 @@ def sign_out():
 
 
 # 1、注册功能
-def register():
+def register(is_admin=False):
     while True:
         print('\n注册')
         username = input('请输入用户名：').strip()
@@ -55,7 +55,7 @@ def register():
         password = common.pwd_to_sha256(password)
 
         # 4、调用注册接口进行注册
-        flag, msg = user_interface.register_interface(username, password)  # 接收小元组，进行解压赋值
+        flag, msg = user_interface.register_interface(username, password, is_admin)  # 接收小元组，进行解压赋值
         print(msg)
         if flag:  # 注册成功，终止循环
             break
@@ -112,7 +112,7 @@ def login():
 
 # 3、充值功能
 @common.login_auth
-def recharge():
+def recharge(username=False):
     print('充值功能')
     while True:
         amount = input('请输入充值金额：').strip()
@@ -129,9 +129,11 @@ def recharge():
         # 判断用户输入金额是否为0
         if amount == 0:
             print('\n充值的金额不能为0！')
+            continue
         # 调用充值接口进行充值
-        from interface import bank_interface
-        flag, msg = bank_interface.recharge_interface(logged_user, amount)
+        if not username:
+            username=logged_user
+        flag, msg = bank_interface.recharge_interface(username, amount)
         print(msg)
         if flag:
             break
@@ -141,24 +143,81 @@ def recharge():
 @common.login_auth
 def transfer():
     print('转账功能')
+    while True:
+        # 接收用户输入的用户名和转账金额
+        to_username = input('\n请输入转账目标用户的用户名：').strip()
+        amount = input('\n请输入转账金额：').strip()
+        is_transfer = input('\n按任意键确认/n退出').strip().lower()
+        # 允许用户退出转账功能
+        if is_transfer == 'n':
+            break
+        # 判断用户输入的金额是否是数字
+        if not amount.isdigit():
+            print('\n请输入正确的金额！')
+            continue
+        # 把amount转为int类型
+        amount = int(amount)
+        # 判断用户输入金额是否为0
+        if amount == 0:
+            print('\n转账的金额不能为0！')
+            continue
+        # 判断用户是否给自己转账
+        if logged_user == to_username:
+            print('\n不能给自己转账！')
+            continue
+
+        # 调用转账接口进行转账
+        flag, msg = bank_interface.transfer_interface(logged_user, to_username, amount)
+        print(msg)
+        if flag:
+            break
 
 
 # 5、提现功能
 @common.login_auth
 def withdraw():
     print('提现功能')
+    while True:
+        amount = input('请输入提现金额：').strip()
+        is_withdraw = input('按任意键确认/n退出').strip().lower()
+        # 允许用户退出提现功能
+        if is_withdraw == 'n':
+            break
+        # 判断用户输入的金额是否是数字
+        if not amount.isdigit():
+            print('\n请输入正确的金额！')
+            continue
+        # 把amount转为int类型
+        amount = int(amount)
+        # 判断用户输入金额是否小于500
+        if amount < 500:
+            print('\n提现的金额不能小于500！')
+            continue
+        # 调用提现接口进行提现
+
+        flag, msg = bank_interface.withdraw_interface(logged_user, amount)
+        print(msg)
+        if flag:
+            break
 
 
 # 6、查看余额
 @common.login_auth
 def check_balance():
     print('查看余额')
+    flag, msg = bank_interface.check_balance_interface(logged_user)
+    print(msg)
 
 
 # 7、查看流水
 @common.login_auth
 def check_flow():
     print('查看流水')
+    flag, flow_list = bank_interface.check_flow_interface(logged_user)
+    if not flow_list:
+        print('\n该用户没有流水！')
+    for flow in flow_list:
+        print(flow)
 
 
 # 8、购物功能
@@ -187,6 +246,8 @@ def login_out():
 @common.login_auth
 def admin():
     print('管理员功能')
+    from core import admin
+    admin.main()
 
 
 # 函数字典
@@ -212,10 +273,14 @@ def main():
     while True:
         print('购物管理系统'.center(20, '='))
         for num in func_dict:
-            print(f'{num} {func_dict.get(num)[0]}'.center(20, ' '))
+            if logged_admin:
+                print(f'{num} {func_dict.get(num)[0]}'.center(20, ' '))
+            else:
+                if num != '11':
+                    print(f'{num} {func_dict.get(num)[0]}'.center(20, ' '))
         print('我也是有底线的'.center(20, '='))
         opt = input('请输入功能编号：').strip()
-        if opt not in func_dict:
+        if opt not in func_dict or (not logged_admin and opt == '11'):
             print('此功能不存在')
             continue
         func_dict.get(opt)[1]()  # 拿到函数名加括号，执行对应功能函数

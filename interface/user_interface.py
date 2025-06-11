@@ -16,7 +16,7 @@ from db import db_handler
 
 # 用户注册接口
 
-def register_interface(username, password, balance=0, is_admin=False):
+def register_interface(username, password, is_admin=False, balance=0):
     """
     注册接口，
     :param username:用户名 str
