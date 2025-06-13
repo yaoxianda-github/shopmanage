@@ -94,3 +94,24 @@ def check_flow_interface(username):
     user_data = db_handler.select_data(username)
     flow_list = user_data.get('flow')
     return True, flow_list
+
+
+# 银行支付接口
+def pay_interface(username, total):
+    # 拿到用户数据
+    user_data = db_handler.select_data(username)
+
+    # 判断用户余额是否充足
+    if user_data.get('balance') < total:
+        return False, f'\n用户{username}余额不足，支付{total}元失败！'
+    # 正常支付
+    user_data['balance'] -= total
+    # 记录流水
+    msg = f'\n{datetime.now()} 用户{username} 共消费 {total}元！' \
+          f'当前余额为{user_data.get("balance")}'
+    user_data['flow'].append(msg)
+    # 保存用户数据
+    db_handler.save(user_data)
+    # 返回结果
+    return True, msg
+

@@ -12,7 +12,7 @@
 
 """
 
-from interface import user_interface, bank_interface
+from interface import user_interface, bank_interface, shop_interface
 from lib import common
 
 logged_user = None  # 记录用户登录状态
@@ -132,7 +132,7 @@ def recharge(username=False):
             continue
         # 调用充值接口进行充值
         if not username:
-            username=logged_user
+            username = logged_user
         flag, msg = bank_interface.recharge_interface(username, amount)
         print(msg)
         if flag:
@@ -224,12 +224,102 @@ def check_flow():
 @common.login_auth
 def shopping():
     print('购物功能')
+    # 初始化购物车
+    shopping_cart = {}
+    # {"绿韭菜":{"number": "F00001", "name": "绿韭菜", "price": 2.0, "数量": 2},}     # 通过字典key快速判断购物车中是否存在相同商品
+    # 调用接口，获取商品数据
+    goods = shop_interface.check_goods_interface('goods')
+    while True:
+        print('\n欢迎来到达达的马蹄商城!'.center(50, '='))
+        # 打印商品信息表头
+        print(f'{"商品序号":<10}{"商品编号":<10}{"商品名称":<10}{"商品价格":<10}')
+        for indx, good in enumerate(goods):  # 枚举商品列表
+            print(f'{indx + 1:<13}{good.get("number"):<13}{good.get("name"):<13}{good.get("price"):<13}')
+        print('\n欢迎再来，24小时为您服务！'.center(50, '='))
+        opt = input('\n请选择商品序号(y结算/n退出)：').strip()
+        if opt == 'n':  # 用户选择退出，调用添加购物车接口，把购物车数据写入文件
+            if not shopping_cart:  # 如果购物车数据为空，则直接退出
+                break
+            flag, msg = shop_interface.add_shop_cart_interface(logged_user, shopping_cart)
+            print(msg)
+            if flag:
+                break
+        # 如果用户选择结算
+        if opt == 'y':
+            if not shopping_cart:
+                print('\n购物车中没有商品，无法结算！')
+                continue
+            flag, msg, total = shop_interface.close_account_interface(logged_user, shopping_cart)
+            print(msg)
+            if flag:
+                print('\n欢迎来到达达的马蹄商城!'.center(65, ' '))
+                print(65 * '=')
+                print(f'{"商品序号":<10}{"商品编号":<10}{"商品名称":<10}{"商品价格":<10}{"数量":<10}{"商品总价":<10}')
+                for indx, good in enumerate(shopping_cart.values()):  # 枚举商品列表
+                    print(
+                        f'{indx + 1:<12}{good.get("number"):<12}{good.get("name"):<12}{good.get("price"):<12}{good.get("数量"):<12}{good.get("数量") * good.get("price"):<12}')
+                print(f'\n总消费金额:{total}')
+                print(65 * '=')
+                print('谢谢惠顾！欢迎下次光临'.center(65, ' '))
+                print('请保留好您的购物小票！'.center(65, ' '))
+            # 购物成功和购物失败都结束，break，可以跳转到充值功能，待办事项
+            break
+
+        # 判断用户输入的是否是数字
+        if not opt.isdigit():
+            print('\n输入的不合法，请重新输入正确的商品序号！')
+            continue
+        # 判断用户输入的序号是否存在
+        opt = int(opt) - 1
+        if opt not in list(range(len(goods))):  # 用户输入的商品序号是否在商品列表的索引范围内
+            print('\n该商品不存在，请重新选择！')
+            continue
+        # 获取用户选择的商品信息
+        good_info = goods[opt]
+        name = good_info.get('name')
+        # 把商品信息添加到购物车
+        # 判断购物车是否存在相同的商品
+        if name not in shopping_cart:
+            good_info['数量'] = 1
+            shopping_cart[name] = good_info
+        else:
+            shopping_cart[name]['数量'] += 1
+        # 打印当前购物车数据
+        print('\n当前购物车数据')
+        print(f'{"商品序号":<10}{"商品编号":<10}{"商品名称":<10}{"商品价格":<10}{"数量":<10}{"商品总价":<10}')
+        for indx, good in enumerate(shopping_cart.values()):  # 枚举商品列表
+            print(
+                f'{indx + 1:<13}{good.get("number"):<13}{good.get("name"):<13}{good.get("price"):<13}{good.get("数量"):<13}{good.get("数量") * good.get("price"):<13}')
+
+        # 1）用户继续选择商品
+        # 2）用户进行结算和支付
+        # 3）用户不选择结算，并且退出购物车功能，将用户数据写入到用户数据
 
 
 # 9、查看购物车功能
 @common.login_auth
 def check_shopping_cart():
     print('查看购物车')
+    # 调用查看购物车接口
+    shop_cart_file = shop_interface.check_shop_cart_interface(logged_user)
+    if not shop_cart_file:
+        print('\n购物车无数据！')
+    # 打印当前购物车数据
+    print('\n当前购物车数据')
+    print(f'{"商品序号":<10}{"商品编号":<10}{"商品名称":<10}{"商品价格":<10}{"数量":<10}{"商品总价":<10}')
+    for indx, good in enumerate(shop_cart_file.values()):  # 枚举商品列表
+        print(
+            f'{indx + 1:<13}{good.get("number"):<13}{good.get("name"):<13}{good.get("price"):<13}{good.get("数量"):<13}{good.get("数量") * good.get("price"):<13}')
+    # 让用户选择结算购买或者退出
+    opt = input('y付款/n退出：').strip().lower()
+    # 用户选择付款结算
+    if opt == 'y':
+        flag, msg, total = shop_interface.close_account_interface(logged_user, shop_cart_file)
+        print(msg)
+        if flag:    # 结算成功，清空购物车
+            # 调用接口清空购物车
+            shop_interface.clear_shop_cart_interface(logged_user)
+        # 结算失败自动退出购物车功能
 
 
 # 10、退出账号

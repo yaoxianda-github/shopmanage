@@ -18,28 +18,35 @@ from conf import setting
 
 
 # 3.查看用户名是否存在
-def select_data(username, data=True):  # 定义data=true时表示逻辑接口层需要返回数据
-    # 1、接收逻辑接口层的username，并拼接用户名.json数据文件的路径
-    user_path = os.path.join(
-        setting.USER_DATA_DIR, f'{username}.json'
-    )
-
+def select_data(username, data=True,
+                is_user=True):  # 定义data=true时表示逻辑接口层需要返回数据，否则为不需要返回数据；is_user=True表示查询用户数据，否则为查询商品数据
+    if is_user:
+        # 1、接收逻辑接口层的username，并拼接用户名.json数据文件的路径
+        user_path = os.path.join(
+            setting.USER_DATA_DIR, f'{username}.json'
+        )
+    else:
+        user_path = os.path.join(
+            setting.GOODS_DATA_DIR, f'{username}.json'
+        )
     # 3.1判断用户名.json是否存在，如果存在，则提示用户重新输入
     if not os.path.exists(user_path):  # 用户不存在的情况，找不到用户json文件
         return
     if not data:  # 用户存在，且不需要用户数据时
         return True
     # 用户存在，且需要用户数据
-    with open(user_path, mode='rt', encoding='utf-8') as f:
+    with open(user_path, mode='rt', encoding='utf-8-sig') as f:
         user_data = json.load(f)
         return user_data
-
     # if os.path.exists(user_path) and not data:  # 逻辑接口层不需要返回数据时
     #     return True
     # elif os.path.exists(user_path) and data:
     #     with open(user_path, mode='rt', encoding='utf-8') as f:
     #         user_data = json.load(f)
     #         return user_data
+
+    # 获取goods_data路径
+    GOODS_DATA_DIR = os.path.join(BASE_DIR, 'db', 'goods_data')
 
 
 # 保存用户数据
@@ -49,5 +56,5 @@ def save(user_data):
     user_path = os.path.join(
         setting.USER_DATA_DIR, f'{username}.json'
     )
-    with open(user_path, mode='wt', encoding='utf-8') as f:
+    with open(user_path, mode='wt', encoding='utf-8-sig') as f:     # utf-8-sig避免用户通过windows记事本编辑商品文件时编码问题
         json.dump(user_data, f, ensure_ascii=False)

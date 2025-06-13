@@ -32,7 +32,7 @@ def register_interface(username, password, is_admin=False, balance=0):
         'username': username,
         'password': password,
         'balance': balance,
-        'shopping_cart': [],
+        'shopping_cart': {},
         'flow': [],
         'is_admin': is_admin,
         'locked': False,
